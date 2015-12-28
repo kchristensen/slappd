@@ -27,12 +27,11 @@ from ConfigParser import SafeConfigParser
 from datetime import datetime
 import dateutil.parser
 import json
-import os
 import requests
 import time
 
 cfg = SafeConfigParser()
-cfg.read(os.path.expanduser('untappd.cfg'))
+cfg.read('untappd.cfg')
 now = int(datetime.utcnow().strftime("%s"))
 last_run = now - cfg.getint('untappd', 'interval')
 
