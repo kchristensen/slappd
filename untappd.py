@@ -32,7 +32,7 @@ import requests
 import time
 
 cfg = SafeConfigParser()
-cfg.read(os.path.expanduser('.untappd.cfg'))
+cfg.read(os.path.expanduser('untappd.cfg'))
 now = int(datetime.utcnow().strftime("%s"))
 last_run = now - cfg.getint('untappd', 'interval')
 
