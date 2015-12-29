@@ -24,16 +24,14 @@ SOFTWARE.
 """
 
 from ConfigParser import SafeConfigParser
-from datetime import datetime
-import dateutil.parser
+from operator import itemgetter
 import json
+import os
 import requests
-import time
 
+cfg_file = os.path.dirname(os.path.realpath(__file__)) + '/untappd.cfg'
 cfg = SafeConfigParser()
-cfg.read('untappd.cfg')
-now = int(datetime.utcnow().strftime("%s"))
-last_run = now - cfg.getint('untappd', 'interval')
+cfg.read(cfg_file)
 
 
 def notifySlack(msg, thumb):
@@ -48,12 +46,14 @@ def notifySlack(msg, thumb):
 
 def getURL(method):
     return "https://api.untappd.com/v4/{0}?" \
-        "client_id={1}&client_secret={2}&access_token={3}".format(
+        "client_id={1}&client_secret={2}&access_token={3}&min_id={4}".format(
             method,
             cfg.get('untappd', 'id'),
             cfg.get('untappd', 'secret'),
-            cfg.get('untappd', 'token')
+            cfg.get('untappd', 'token'),
+            cfg.get('untappd', 'lastseen')
         )
+
 
 try:
     data = requests.get(getURL('checkin/recent')).text
@@ -61,25 +61,33 @@ try:
         for checkin in json.loads(data)['response']['checkins']['items']:
             user = checkin['user']['user_name'].lower()
             if user in cfg.get('untappd', 'users'):
-                checkin_date = dateutil.parser.parse(checkin['created_at'])
-                if int(time.mktime(checkin_date.timetuple())) > last_run:
-                    msg = ":beer: *<{0}/user/{1}|{2} {3}>* is " \
-                        "drinking a *<{0}/b/{8}/{4}|{5}>* by " \
-                        "*<{0}/w/{8}/{7}|{6}>* ({9}/5)".format(
-                            'http://untappd.com',
-                            checkin['user']['user_name'],
-                            checkin['user']['first_name'],
-                            checkin['user']['last_name'],
-                            checkin['beer']['bid'],
-                            checkin['beer']['beer_name'],
-                            checkin['brewery']['brewery_name'],
-                            checkin['brewery']['brewery_id'],
-                            checkin['brewery']['brewery_slug'],
-                            checkin['rating_score']
-                        )
-                    if len(checkin['checkin_comment']):
-                        msg += "\n>\"{0}\"".format(checkin['checkin_comment'])
+                msg = ":beer: *<{0}/user/{1}|{2} {3}>* is " \
+                    "drinking a *<{0}/b/{8}/{4}|{5}>* by " \
+                    "*<{0}/w/{8}/{7}|{6}>* ({9}/5)".format(
+                        'http://untappd.com',
+                        checkin['user']['user_name'],
+                        checkin['user']['first_name'],
+                        checkin['user']['last_name'],
+                        checkin['beer']['bid'],
+                        checkin['beer']['beer_name'],
+                        checkin['brewery']['brewery_name'],
+                        checkin['brewery']['brewery_id'],
+                        checkin['brewery']['brewery_slug'],
+                        checkin['rating_score'])
 
-                    notifySlack(msg, checkin['beer']['beer_label'])
+                if len(checkin['checkin_comment']):
+                    msg += "\n>\"{0}\"".format(checkin['checkin_comment'])
+
+                notifySlack(msg, checkin['beer']['beer_label'])
+
+        # Update the config file with the last checkin seen
+        if json.loads(data)['response']['checkins']['count']:
+            cfg.set('untappd', 'lastseen',
+                    str(max(json.loads(data)['response']['checkins']['items'],
+                        key=itemgetter('checkin_id'))['checkin_id']))
+
+            with open(cfg_file, 'wb') as cfgfile:
+                cfg.write(cfgfile)
+
 except requests.ConnectionError:
     print 'Connection Error'
