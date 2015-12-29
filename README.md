@@ -14,13 +14,13 @@ The first time you run the script, it may be a little chatty because it has not
 previously seen your feed before.
 
 ### Requirements
-* Python
-* Some Python modules (ConfigParser, simplejson, requests)
+* Python 3.5
+* Some Python modules (configparser, simplejson, requests)
 * A way of periodically running this script (at, cron, etc)
 * Untappd [API access](https://untappd.com/api/register?register=new)
 * A Slack channel full of beer lovers
 
 ### Configuration
 * Install the required Python modules via: `pip install -r requirements.txt`
-* Edit the [untappd.cfg](untappd.cfg) example provided to reflect your API information
+* Copy [untappd.cfg.dist](untappd.cfg.dist) to 'untappd.cfg' and edit it to reflect your API information
 * Run it from crontab: `*/5 * * * python /path/to/untappd.py > /dev/null 2>&1`

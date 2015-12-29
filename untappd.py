@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.5
 """
 The MIT License
 
@@ -23,13 +23,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from operator import itemgetter
 import json
 import os
 import requests
+import sys
 
 cfg_file = os.path.dirname(os.path.realpath(__file__)) + '/untappd.cfg'
+if not os.path.isfile(cfg_file):
+    print('ERROR: Required configuration file \'untappd.cfg\' is missing!')
+    sys.exit(1)
+
 cfg = SafeConfigParser()
 cfg.read(cfg_file)
 
@@ -51,8 +56,7 @@ def getURL(method):
             cfg.get('untappd', 'id'),
             cfg.get('untappd', 'secret'),
             cfg.get('untappd', 'token'),
-            cfg.get('untappd', 'lastseen')
-        )
+            cfg.get('untappd', 'lastseen'))
 
 
 try:
@@ -86,8 +90,9 @@ try:
                     str(max(json.loads(data)['response']['checkins']['items'],
                         key=itemgetter('checkin_id'))['checkin_id']))
 
-            with open(cfg_file, 'wb') as cfgfile:
+            with open(cfg_file, 'w') as cfgfile:
                 cfg.write(cfgfile)
 
 except requests.ConnectionError:
-    print 'Connection Error'
+    print('Connection Error')
+    sys.exit(1)
