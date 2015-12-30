@@ -10,8 +10,10 @@ a Slack channel.
 This is designed to be run from crontab, and issues one API call per run.
 
 ### Known Issues
-The first time you run the script, it may be a little chatty because it has not
+* The first time you run the script, it may be a little chatty because it has not
 previously seen your feed before.
+* If you have a lot of Untappd friends, but are only watching a subset of them,
+you may miss check-ins if you don't run Slappd regularly.
 
 ### Requirements
 * Python 3.5
@@ -21,6 +23,6 @@ previously seen your feed before.
 * A Slack channel full of beer lovers
 
 ### Configuration
-* Install the required Python modules via: `pip install -r requirements.txt`
-* Copy [untappd.cfg.dist](untappd.cfg.dist) to 'untappd.cfg' and edit it to reflect your API information
-* Run it from crontab: `*/5 * * * python /path/to/untappd.py > /dev/null 2>&1`
+* Install the required Python modules via: `pip3 install -r requirements.txt`
+* Copy [slappd.cfg.dist](slappd.cfg.dist) to 'slappd.cfg' and edit it to reflect your API information
+* Run it from crontab: `*/5 * * * python3.5 /path/to/slappd.py > /dev/null 2>&1`

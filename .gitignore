@@ -56,5 +56,5 @@ docs/_build/
 # PyBuilder
 target/
 
-untappd.cfg
-untappd.cfg.bak
+slappd.cfg
+slappd.cfg.bak
