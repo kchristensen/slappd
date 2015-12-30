@@ -30,6 +30,14 @@ import os
 import requests
 
 
+def getUntappdActivity(cfg):
+    """Returns a requests object full of Untappd API data"""
+    try:
+        return requests.get(getURL(cfg, 'checkin/recent')).text
+    except ConnectionError:
+        print('There was an error connecting to the Untappd API')
+
+
 def getURL(cfg, method):
     """Returns an API url with credentials inserted"""
     return "https://api.untappd.com/v4/{}?" \
@@ -50,26 +58,32 @@ def loadConfig(cfg_file):
     return cfg
 
 
-def notifySlack(msg, thumb, token):
+def notifySlack(token, text, icon, title=None, thumb=None):
     """Sends a Slack message via webhooks"""
     url = 'https://hooks.slack.com/services/' + token
-    payload = {
-        'icon_url': thumb,
-        'text': msg,
-        'username': 'Untappd'
-    }
+    # If thumb is set, we're sending a badge notification
+    if thumb is not None:
+        payload = {
+            'attachments': [
+                {
+                    'title': title,
+                    'text': text,
+                    'thumb_url': thumb
+                }
+            ],
+            'icon_url': icon,
+            'username': 'Untappd'
+        }
+    else:
+        payload = {
+            'icon_url': icon,
+            'text': text,
+            'username': 'Untappd'
+        }
     try:
         requests.post(url, data=json.dumps(payload))
     except ConnectionError:
         print('There was an error connecting to the Slack API')
-
-
-def getUntappdActivity(cfg):
-    """Returns a requests object full of Untappd API data"""
-    try:
-        return requests.get(getURL(cfg, 'checkin/recent')).text
-    except ConnectionError:
-        print('There was an error connecting to the Untappd API')
 
 
 def main():
@@ -77,37 +91,55 @@ def main():
     cfg_file = os.path.dirname(os.path.realpath(__file__)) + '/slappd.cfg'
     cfg = loadConfig(cfg_file)
     data = json.loads(getUntappdActivity(cfg))
-    msg = ''
+    text = ''
 
     if data['meta']['code'] == 200:
-        for checkin in data['response']['checkins']['items']:
+        checkins = data['response']['checkins']['items']
+        for checkin in checkins:
             user = checkin['user']['user_name'].lower()
             # If this is one of our watched users, let's send a Slack message
             if user in cfg.get('untappd', 'users'):
-                msg += ":beer: *<{0}/user/{1}|{2} {3}>* is " \
+                # If any users earned badges, let's send individual messages
+                for badge in checkin['badges']['items']:
+                    title = "<{0}/user/{1}|{2} {3}> earned the {4} badge!" \
+                        .format(
+                            'http://untappd.com',
+                            checkin['user']['user_name'],
+                            checkin['user']['first_name'],
+                            checkin['user']['last_name'],
+                            badge['badge_name'])
+                    notifySlack(
+                        cfg.get('slack', 'token'),
+                        badge['badge_description'],
+                        badge['badge_image']['sm'],
+                        title,
+                        badge['badge_image']['md'])
+
+                # Lump all of the checkins together as one message
+                text += ":beer: *<{0}/user/{1}|{2} {3}>* is " \
                     "drinking a *<{0}/b/{8}/{4}|{5}>* by " \
                     "*<{0}/w/{8}/{7}|{6}>* ({9}/5)\n".format(
-                     'http://untappd.com',
-                     checkin['user']['user_name'],
-                     checkin['user']['first_name'],
-                     checkin['user']['last_name'],
-                     checkin['beer']['bid'],
-                     checkin['beer']['beer_name'],
-                     checkin['brewery']['brewery_name'],
-                     checkin['brewery']['brewery_id'],
-                     checkin['brewery']['brewery_slug'],
-                     checkin['rating_score'])
+                        'http://untappd.com',
+                        checkin['user']['user_name'],
+                        checkin['user']['first_name'],
+                        checkin['user']['last_name'],
+                        checkin['beer']['bid'],
+                        checkin['beer']['beer_name'],
+                        checkin['brewery']['brewery_name'],
+                        checkin['brewery']['brewery_id'],
+                        checkin['brewery']['brewery_slug'],
+                        checkin['rating_score'])
 
                 # If there's a check-in comment, include it
                 if len(checkin['checkin_comment']):
-                    msg += "\n>\"{0}\"\n".format(checkin['checkin_comment'])
+                    text += "\n>\"{0}\"\n".format(checkin['checkin_comment'])
 
-        # Send a message if there has been any activity
-        if len(msg):
+        # Send a message if there has been any check-in activity
+        if len(text):
             notifySlack(
-                msg,
-                checkin['beer']['beer_label'],
-                cfg.get('slack', 'token'))
+                cfg.get('slack', 'token'),
+                text,
+                checkin['beer']['beer_label'])
 
         # Find the id of the most recent checkin
         if data['response']['checkins']['count']:
@@ -123,6 +155,8 @@ def main():
                     cfg.write(fd)
             except EnvironmentError:
                 print('There was an error writing to the config file')
+    else:
+        print("Untappd API returned http code {}".format(data['meta']['code']))
 
 
 if __name__ == '__main__':

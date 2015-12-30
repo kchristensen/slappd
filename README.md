@@ -2,8 +2,8 @@
 
 ### About
 Since Untappd does not currently support callbacks or webhooks, I wrote a basic
-Slack integration that will relay check-ins for specified users on your feed to
-a Slack channel.
+Slack integration that will relay check-ins and badges earned for specified users
+on your feed to a Slack channel.
 
 ![Screenshot](screenshot.png)
 
