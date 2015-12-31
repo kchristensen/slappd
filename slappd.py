@@ -130,8 +130,8 @@ def main():
                         checkin['brewery']['brewery_slug'])
                 
                 # If there's a rating, include it
-                if len(checkin['rating_score']):
                     text += " ({0}/5)\n".format(checkin['rating_score'])
+                if int(checkin['rating_score']):
                 else:
                     text += "\n"
 
