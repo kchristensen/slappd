@@ -118,7 +118,7 @@ def main():
                 # Lump all of the checkins together as one message
                 text += ":beer: *<{0}/user/{1}|{2} {3}>* is " \
                     "drinking a *<{0}/b/{8}/{4}|{5}>* by " \
-                    "*<{0}/w/{8}/{7}|{6}>* ({9}/5)\n".format(
+                    "*<{0}/w/{8}/{7}|{6}>*".format(
                         'http://untappd.com',
                         checkin['user']['user_name'],
                         checkin['user']['first_name'],
@@ -127,8 +127,13 @@ def main():
                         checkin['beer']['beer_name'],
                         checkin['brewery']['brewery_name'],
                         checkin['brewery']['brewery_id'],
-                        checkin['brewery']['brewery_slug'],
-                        checkin['rating_score'])
+                        checkin['brewery']['brewery_slug'])
+                
+                # If there's a rating, include it
+                if len(checkin['rating_score']):
+                    text += " ({0}/5)\n".format(checkin['rating_score'])
+                else:
+                    text += "\n"
 
                 # If there's a check-in comment, include it
                 if len(checkin['checkin_comment']):
