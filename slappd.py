@@ -30,15 +30,15 @@ import os
 import requests
 
 
-def getUntappdActivity(cfg):
+def getUntappdActivity():
     """Returns a requests object full of Untappd API data"""
     try:
-        return requests.get(getURL(cfg, 'checkin/recent')).text
+        return requests.get(getURL('checkin/recent')).text
     except ConnectionError:
         print('There was an error connecting to the Untappd API')
 
 
-def getURL(cfg, method):
+def getURL(method):
     """Returns an API url with credentials inserted"""
     return "https://api.untappd.com/v4/{}?" \
         "client_id={}&client_secret={}&access_token={}&min_id={}".format(
@@ -50,12 +50,13 @@ def getURL(cfg, method):
 
 
 def loadConfig(cfg_file):
-    """Returns a configparser object from the parsed config file"""
+    """Instantiates a global configparser object from the config file"""
+    global cfg
+
     if not os.path.exists(cfg_file):
-        raise OSError('ERROR: Configuration file slappd.cfg does not exist')
+        raise OSError('Configuration file slappd.cfg does not exist')
     cfg = SafeConfigParser()
     cfg.read(cfg_file)
-    return cfg
 
 
 def notifySlack(token, text, icon, title=None, thumb=None):
@@ -89,8 +90,9 @@ def notifySlack(token, text, icon, title=None, thumb=None):
 def main():
     """Where the magic happens"""
     cfg_file = os.path.dirname(os.path.realpath(__file__)) + '/slappd.cfg'
-    cfg = loadConfig(cfg_file)
-    data = json.loads(getUntappdActivity(cfg))
+    loadConfig(cfg_file)
+    slack_token = cfg.get('slack', 'token')
+    data = json.loads(getUntappdActivity())
     text = ''
 
     if data['meta']['code'] == 200:
@@ -101,7 +103,7 @@ def main():
             if user in cfg.get('untappd', 'users'):
                 # If any users earned badges, let's send individual messages
                 for badge in checkin['badges']['items']:
-                    title = "<{0}/user/{1}|{2} {3}> earned the {4} badge!" \
+                    title = "<{}/user/{}|{} {}> earned the {} badge!" \
                         .format(
                             'http://untappd.com',
                             checkin['user']['user_name'],
@@ -109,7 +111,7 @@ def main():
                             checkin['user']['last_name'],
                             badge['badge_name'])
                     notifySlack(
-                        cfg.get('slack', 'token'),
+                        slack_token,
                         badge['badge_description'],
                         badge['badge_image']['sm'],
                         title,
@@ -128,21 +130,21 @@ def main():
                         checkin['brewery']['brewery_name'],
                         checkin['brewery']['brewery_id'],
                         checkin['brewery']['brewery_slug'])
-                
+
                 # If there's a rating, include it
-                    text += " ({0}/5)\n".format(checkin['rating_score'])
                 if int(checkin['rating_score']):
+                    text += " ({}/5)\n".format(checkin['rating_score'])
                 else:
                     text += "\n"
 
                 # If there's a check-in comment, include it
                 if len(checkin['checkin_comment']):
-                    text += "\n>\"{0}\"\n".format(checkin['checkin_comment'])
+                    text += ">\"{}\"\n".format(checkin['checkin_comment'])
 
         # Send a message if there has been any check-in activity
         if len(text):
             notifySlack(
-                cfg.get('slack', 'token'),
+                slack_token,
                 text,
                 checkin['beer']['beer_label'])
 
