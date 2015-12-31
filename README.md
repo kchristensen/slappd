@@ -7,7 +7,7 @@ on your feed to a Slack channel.
 
 ![Screenshot](screenshot.png)
 
-This is designed to be run from crontab, and issues one API call per run.
+This script is designed to be run from crontab, and issues one API call per run.
 
 ### Known Issues
 * The first time you run the script, it may be a little chatty because it has not
