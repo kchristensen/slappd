@@ -103,10 +103,8 @@ def main():
             if user in cfg.get('untappd', 'users'):
                 # If any users earned badges, let's send individual messages
                 for badge in checkin['badges']['items']:
-                    title = "<{}/user/{}|{} {}> earned the {} badge!" \
+                    title = "{} {} earned the {} badge!" \
                         .format(
-                            'http://untappd.com',
-                            checkin['user']['user_name'],
                             checkin['user']['first_name'],
                             checkin['user']['last_name'],
                             badge['badge_name'])
