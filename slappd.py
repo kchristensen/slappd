@@ -34,7 +34,9 @@ import requests
 def getUntappdActivity():
     """Returns a requests object full of Untappd API data"""
     try:
-        return requests.get(getURL('checkin/recent')).text
+        r = requests.get(getURL('checkin/recent'))
+        r.encoding = 'utf-8'
+        return r.text
     except ConnectionError:
         print('There was an error connecting to the Untappd API')
 
