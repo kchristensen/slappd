@@ -27,6 +27,7 @@ from configparser import SafeConfigParser
 from operator import itemgetter
 import json
 import os
+import re
 import requests
 
 
@@ -68,7 +69,7 @@ def notifySlack(token, text, icon, title=None, thumb=None):
             'attachments': [
                 {
                     'title': title,
-                    'text': text,
+                    'text': stripHTML(text),
                     'thumb_url': thumb
                 }
             ],
@@ -82,9 +83,13 @@ def notifySlack(token, text, icon, title=None, thumb=None):
             'username': 'Untappd'
         }
     try:
-        requests.post(url, data=json.dumps(payload))
+        requests.post(url, json=payload)
     except ConnectionError:
         print('There was an error connecting to the Slack API')
+
+
+def stripHTML(text):
+    return re.sub(r'<[^>]*?>', '', text)
 
 
 def main():
