@@ -190,9 +190,9 @@ def main():
         sys.exit(1)
 
 
-if sys.version_info >= (3, 0):
+if sys.version_info >= (3, 5):
     if __name__ == '__main__':
         main()
 else:
-    print('This script requires Python 3.0 or greater.')
+    print('This script requires Python 3.5 or greater.')
     sys.exit(1)

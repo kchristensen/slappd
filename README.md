@@ -16,7 +16,7 @@ previously seen your feed before.
 you may miss check-ins if you don't run Slappd regularly.
 
 ### Requirements
-* Python 3.5
+* Python 3.5 (It may run on >= 3.0, but I have not tested.)
 * Some Python modules (configparser, simplejson, requests)
 * A way of periodically running this script (at, cron, etc)
 * Untappd [API access](https://untappd.com/api/register?register=new)
