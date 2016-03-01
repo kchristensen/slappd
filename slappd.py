@@ -147,7 +147,7 @@ def main():
                 text += ":beer: *<{0}/user/{1}|{2} {3}>* is " \
                     "drinking a *<{0}/b/{8}/{4}|{5}>* by " \
                     "*<{0}/w/{8}/{7}|{6}>*".format(
-                        'http://untappd.com',
+                        'https://untappd.com',
                         checkin['user']['user_name'],
                         checkin['user']['first_name'],
                         checkin['user']['last_name'],
@@ -156,6 +156,14 @@ def main():
                         checkin['brewery']['brewery_name'],
                         checkin['brewery']['brewery_id'],
                         checkin['brewery']['brewery_slug'])
+
+                # If there's a location, include it
+                if checkin['venue']:
+                    text += " at *<{}/v/{}/{}|{}>*".format(
+                        'https://untappd.com',
+                        checkin['venue']['venue_slug'],
+                        checkin['venue']['venue_id'],
+                        checkin['venue']['venue_name'])
 
                 # If there's a rating, include it
                 if int(checkin['rating_score']):
