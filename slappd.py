@@ -63,7 +63,7 @@ def config_update():
 def fetch_untappd_activity():
     """Returns a requests object full of Untappd API data"""
     try:
-        r = requests.get(fetch_url('checkin/recent'))
+        r = requests.get(fetch_url('checkin/recent'), timeout=2)
         r.encoding = 'utf-8'
         return r.text
     except ConnectionError:
