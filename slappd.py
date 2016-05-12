@@ -38,7 +38,8 @@ def config_load():
 
     cfg_file = config_path()
     if not os.path.exists(cfg_file):
-        raise OSError(2, 'Configuration file does not exist', cfg_file)
+        sys.exit('Error: Configuration file {} does not exist'
+                 .format(cfg_file))
     else:
         cfg = SafeConfigParser()
         cfg.read(cfg_file)
@@ -56,25 +57,28 @@ def config_update():
         with open(cfg_file, 'w') as fd:
             cfg.write(fd)
     except EnvironmentError:
-        print('There was an error writing to the config file')
-        sys.exit(1)
+        sys.exit('Error: Writing to the configuration file {}'
+                 .format(cfg_file))
 
 
 def fetch_untappd_activity():
     """Returns a requests object full of Untappd API data"""
+    timeout = cfg.getint('untappd', 'timeout', fallback=10)
     try:
-        r = requests.get(fetch_url('checkin/recent'), timeout=2)
+        r = requests.get(fetch_url('checkin/recent'), timeout=timeout)
         r.encoding = 'utf-8'
         return r.text
+    except requests.exceptions.Timeout:
+        sys.exit('Error: Untappd API timed out after {} seconds'
+                 .format(timeout))
     except ConnectionError:
-        print('There was an error connecting to the Untappd API')
-        sys.exit(1)
+        sys.exit('Error: There was an error connecting to the Untappd API')
 
 
 def fetch_url(method):
     """Returns an API url with credentials inserted"""
-    return "https://api.untappd.com/v4/{}?" \
-        "client_id={}&client_secret={}&access_token={}&min_id={}".format(
+    return 'https://api.untappd.com/v4/{}?' \
+        'client_id={}&client_secret={}&access_token={}&min_id={}'.format(
             method,
             cfg.get('untappd', 'id'),
             cfg.get('untappd', 'secret'),
@@ -108,8 +112,7 @@ def slack_message(token, text, icon, title=None, thumb=None):
     try:
         requests.post(url, json=payload)
     except ConnectionError:
-        print('There was an error connecting to the Slack API')
-        sys.exit(1)
+        sys.exit('Error: There was an error connecting to the Slack API')
 
 
 def strip_html(text):
@@ -131,7 +134,7 @@ def main():
             if user in cfg.get('untappd', 'users'):
                 # If any users earned badges, let's send individual messages
                 for badge in checkin['badges']['items']:
-                    title = "{} {} earned the {} badge!" \
+                    title = '{} {} earned the {} badge!' \
                         .format(
                             checkin['user']['first_name'],
                             checkin['user']['last_name'],
@@ -144,9 +147,9 @@ def main():
                         badge['badge_image']['md'])
 
                 # Lump all of the check-ins together as one message
-                text += ":beer: *<{0}/user/{1}|{2} {3}>* is " \
-                    "drinking a *<{0}/b/{8}/{4}|{5}>* by " \
-                    "*<{0}/w/{8}/{7}|{6}>*".format(
+                text += ':beer: *<{0}/user/{1}|{2} {3}>* is ' \
+                    'drinking a *<{0}/b/{8}/{4}|{5}>* by ' \
+                    '*<{0}/w/{8}/{7}|{6}>*'.format(
                         'https://untappd.com',
                         checkin['user']['user_name'],
                         checkin['user']['first_name'],
@@ -159,7 +162,7 @@ def main():
 
                 # If there's a location, include it
                 if checkin['venue']:
-                    text += " at *<{}/v/{}/{}|{}>*".format(
+                    text += ' at *<{}/v/{}/{}|{}>*'.format(
                         'https://untappd.com',
                         checkin['venue']['venue_slug'],
                         checkin['venue']['venue_id'],
@@ -167,9 +170,8 @@ def main():
 
                 # If there's a rating, include it
                 if int(checkin['rating_score']):
-                    text += " ({}/5)\n".format(checkin['rating_score'])
-                else:
-                    text += "\n"
+                    text += " ({}/5)".format(checkin['rating_score'])
+                text += "\n"
 
                 # If there's a check-in comment, include it
                 if len(checkin['checkin_comment']):
@@ -192,15 +194,15 @@ def main():
 
             # Update the config file with the last check-in seen
             config_update()
-
+    elif data['meta']['error_type'] == 'invalid_limit':
+        sys.exit('Error: Untappd API rate limit reached, try again later')
     else:
-        print("Untappd API returned http code {}".format(data['meta']['code']))
-        sys.exit(1)
+        sys.exit('Error: Untappd API returned http code {}'
+                 .format(data['meta']['code']))
 
 
 if sys.version_info >= (3, 5):
     if __name__ == '__main__':
         main()
 else:
-    print('This script requires Python 3.5 or greater.')
-    sys.exit(1)
+    sys.exit('Error: This script requires Python 3.5 or greater.')
