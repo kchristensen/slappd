@@ -71,7 +71,7 @@ def fetch_untappd_activity():
     except requests.exceptions.Timeout:
         sys.exit('Error: Untappd API timed out after {} seconds'
                  .format(timeout))
-    except ConnectionError:
+    except requests.exceptions.RequestException:
         sys.exit('Error: There was an error connecting to the Untappd API')
 
 
@@ -111,7 +111,7 @@ def slack_message(token, text, icon, title=None, thumb=None):
         }
     try:
         requests.post(url, json=payload)
-    except ConnectionError:
+    except requests.exceptions.RequestException:
         sys.exit('Error: There was an error connecting to the Slack API')
 
 
