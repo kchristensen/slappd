@@ -28,12 +28,13 @@ from operator import itemgetter
 import json
 import os
 import re
-import requests
 import sys
+import requests
 
 
 def config_load():
-    """Instantiates a global configparser object from the config file"""
+    """ Instantiates a global configparser object from the config file """
+    # pylint: disable=I0011,C0103,W0601
     global cfg
 
     cfg_file = config_path()
@@ -46,28 +47,29 @@ def config_load():
 
 
 def config_path():
+    """ Return the patch to the slappd configuration file """
     return os.path.dirname(os.path.realpath(__file__)) + '/slappd.cfg'
 
 
 def config_update():
-    """Updates the config file with any changes that have been made"""
+    """ Updates the config file with any changes that have been made """
     cfg_file = config_path()
 
     try:
-        with open(cfg_file, 'w') as fd:
-            cfg.write(fd)
+        with open(cfg_file, 'w') as cfg_handle:
+            cfg.write(cfg_handle)
     except EnvironmentError:
         sys.exit('Error: Writing to the configuration file {}'
                  .format(cfg_file))
 
 
 def fetch_untappd_activity():
-    """Returns a requests object full of Untappd API data"""
+    """ Returns a requests object full of Untappd API data """
     timeout = cfg.getint('untappd', 'timeout', fallback=10)
     try:
-        r = requests.get(fetch_url('checkin/recent'), timeout=timeout)
-        r.encoding = 'utf-8'
-        return r.text
+        request = requests.get(fetch_url('checkin/recent'), timeout=timeout)
+        request.encoding = 'utf-8'
+        return request.text
     except requests.exceptions.Timeout:
         sys.exit('Error: Untappd API timed out after {} seconds'
                  .format(timeout))
@@ -76,7 +78,7 @@ def fetch_untappd_activity():
 
 
 def fetch_url(method):
-    """Returns an API url with credentials inserted"""
+    """ Returns an API url with credentials inserted """
     return 'https://api.untappd.com/v4/{}?' \
         'client_id={}&client_secret={}&access_token={}&min_id={}'.format(
             method,
@@ -87,7 +89,7 @@ def fetch_url(method):
 
 
 def slack_message(token, text, icon, title=None, thumb=None):
-    """Sends a Slack message via webhooks"""
+    """ Sends a Slack message via webhooks """
     url = 'https://hooks.slack.com/services/' + token
     # If thumb is set, we're sending a badge notification
     if thumb is not None:
@@ -116,11 +118,12 @@ def slack_message(token, text, icon, title=None, thumb=None):
 
 
 def strip_html(text):
+    """ Strip html tags from text """
     return re.sub(r'<[^>]*?>', '', text)
 
 
 def main():
-    """Where the magic happens"""
+    """ Where the magic happens """
     config_load()
     data = json.loads(fetch_untappd_activity())
 
@@ -177,12 +180,16 @@ def main():
                 if len(checkin['checkin_comment']):
                     text += ">\"{}\"\n".format(checkin['checkin_comment'])
 
+                # Use the beer label as an icon if it exists
+                if len(checkin['beer']['beer_label']):
+                    icon = checkin['beer']['beer_label']
+
         # Send a message if there has been any check-in activity
         if len(text):
             slack_message(
                 slack_token,
                 text,
-                checkin['beer']['beer_label'])
+                icon)
 
         # Find the id of the most recent check-in
         if data['response']['checkins']['count']:
@@ -190,7 +197,7 @@ def main():
                 'untappd',
                 'lastseen',
                 str(max(data['response']['checkins']['items'],
-                    key=itemgetter('checkin_id'))['checkin_id']))
+                        key=itemgetter('checkin_id'))['checkin_id']))
 
             # Update the config file with the last check-in seen
             config_update()
