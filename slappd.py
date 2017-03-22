@@ -25,7 +25,6 @@ SOFTWARE.
 
 from configparser import SafeConfigParser
 from operator import itemgetter
-import json
 import os
 import re
 import sys
@@ -69,7 +68,7 @@ def fetch_untappd_activity():
     try:
         request = requests.get(fetch_url('checkin/recent'), timeout=timeout)
         request.encoding = 'utf-8'
-        return request.text
+        return request.json()
     except requests.exceptions.Timeout:
         sys.exit('Error: Untappd API timed out after {} seconds'
                  .format(timeout))
@@ -125,7 +124,7 @@ def strip_html(text):
 def main():
     """ Where the magic happens """
     config_load()
-    data = json.loads(fetch_untappd_activity())
+    data = fetch_untappd_activity()
 
     if data['meta']['code'] == 200:
         checkins = data['response']['checkins']['items']
