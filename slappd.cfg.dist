@@ -5,6 +5,7 @@ timeout = 10                                         # Time to wait in seconds b
 token = D7NLHKQY37YMOI3S3L51R7AYOMKONFXYW9GTY6R4     # See https://untappd.com/api/docs#authentication for more information
 users = foo,bar,baz                                  # A comma separated list of users
 lastseen = 0                                         # The last checkin ID seen by the script, don't worry about this.
+display_media = true                                 # Display the first photo associated with a check-in.
 
 [slack]
 token = TXXXXXXXX/BXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX # A Slack webhook token

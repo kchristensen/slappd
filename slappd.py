@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python3
 """
 The MIT License
 
@@ -87,29 +87,40 @@ def fetch_url(method):
             cfg.get('untappd', 'lastseen'))
 
 
-def slack_message(token, text, icon, title=None, thumb=None):
+def slack_message(images=None, msg_type=None, text=None):
     """ Sends a Slack message via webhooks """
-    url = 'https://hooks.slack.com/services/' + token
-    # If thumb is set, we're sending a badge notification
-    if thumb is not None:
-        # Strip any HTML in text returned from Untappd
+    url = 'https://hooks.slack.com/services/' + cfg.get('slack', 'token')
+    if msg_type == 'badge':
         payload = {
             'attachments': [
                 {
-                    'title': title,
                     'text': strip_html(text),
-                    'thumb_url': thumb
+                    'thumb_url': images['thumb_url'],
+                    'title': images['title']
                 }
             ],
-            'icon_url': icon,
+            'icon_url': images['icon_url'],
+            'username': 'Untappd'
+        }
+    elif msg_type == 'photo':
+        payload = {
+            'attachments': [
+                {
+                    'image_url': images['image_url'],
+                    'title': images['title']
+                }
+            ],
+            'icon_url': images['icon_url'],
+            'text': text,
             'username': 'Untappd'
         }
     else:
         payload = {
-            'icon_url': icon,
+            'icon_url': images['icon_url'],
             'text': text,
             'username': 'Untappd'
         }
+
     try:
         requests.post(url, json=payload)
     except requests.exceptions.RequestException:
@@ -128,9 +139,20 @@ def main():
 
     if data['meta']['code'] == 200:
         checkins = data['response']['checkins']['items']
-        slack_token = cfg.get('slack', 'token')
+        defer_sending = True
+        images = {}
         text = ''
-        for checkin in checkins:
+
+        # If any of our user's checkins contain a photo
+        # send messages immediately so pictures are immediately
+        # after the checkin.
+        for checkin in reversed(checkins):
+            user = checkin['user']['user_name'].lower()
+            if user in cfg.get('untappd', 'users') \
+                    and int(checkin['media']['count']):
+                defer_sending = False
+
+        for checkin in reversed(checkins):
             user = checkin['user']['user_name'].lower()
             # If this is one of our watched users, let's send a Slack message
             if user in cfg.get('untappd', 'users'):
@@ -141,14 +163,14 @@ def main():
                             checkin['user']['first_name'],
                             checkin['user']['last_name'],
                             badge['badge_name'])
+                    images['icon_url'] = badge['badge_image']['sm']
+                    images['thumb_url'] = badge['badge_image']['md']
+                    images['title'] = title
                     slack_message(
-                        slack_token,
-                        badge['badge_description'],
-                        badge['badge_image']['sm'],
-                        title,
-                        badge['badge_image']['md'])
+                        images=images,
+                        msg_type='badge',
+                        text=badge['badge_description'])
 
-                # Lump all of the check-ins together as one message
                 text += ':beer: *<{0}/user/{1}|{2} {3}>* is ' \
                     'drinking a *<{0}/b/{8}/{4}|{5}>* by ' \
                     '*<{0}/w/{8}/{7}|{6}>*'.format(
@@ -181,14 +203,33 @@ def main():
 
                 # Use the beer label as an icon if it exists
                 if len(checkin['beer']['beer_label']):
-                    icon = checkin['beer']['beer_label']
+                    images['icon_url'] = checkin['beer']['beer_label']
 
-        # Send a message if there has been any check-in activity
-        if len(text):
+                # If there's a photo, optionally include it in the message
+                if int(checkin['media']['count']) \
+                        and cfg.getboolean('untappd', 'display_media'):
+                    media = checkin['media']['items'].pop()
+                    images['image_url'] = media['photo']['photo_img_md']
+                    images['title'] = checkin['beer']['beer_name']
+                    slack_message(
+                        images=images,
+                        msg_type='photo',
+                        text=text)
+                # We're sending regular check-ins one at a time this execution
+                elif not defer_sending:
+                    slack_message(
+                        images=images,
+                        text=text)
+
+                # If we're not deferring messages, stop concatenating
+                # text to avoid duplicate check-ins
+                if not defer_sending:
+                    text = ''
+
+        if len(text) and defer_sending:
             slack_message(
-                slack_token,
-                text,
-                icon)
+                images=images,
+                text=text)
 
         # Find the id of the most recent check-in
         if data['response']['checkins']['count']:
