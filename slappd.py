@@ -143,9 +143,9 @@ def main():
         images = {}
         text = ''
 
-        # If any of our user's checkins contain a photo
+        # If any of our user's check-ins contain a photo
         # send messages immediately so pictures are immediately
-        # after the checkin.
+        # after the check-in.
         for checkin in reversed(checkins):
             user = checkin['user']['user_name'].lower()
             if user in cfg.get('untappd', 'users') \
