@@ -4,6 +4,6 @@
 }}/{{ checkin.brewery.brewery_id }}|{{ checkin.brewery.brewery_name }}>*
 {%- if checkin.venue %} at *<{{ untappd_domain }}/v/{{ checkin.venue.venue_slug
 }}/{{ checkin.venue.venue_id }}|{{ checkin.venue.venue_name }}>*{% endif -%}
-{%- if has_rating %} ({{ checkin.rating_score }}/5){% endif %}
+{%- if checkin.rating_score %} ({{ checkin.rating_score }}/5){% endif %}
 {% if checkin.checkin_comment %}> "{{ checkin.checkin_comment }}"
 {% endif %}
