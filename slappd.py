@@ -91,36 +91,23 @@ def get_cwd():
 def slack_message(images=None, msg_type=None, text=None):
     """ Sends a Slack message via webhooks """
     url = 'https://hooks.slack.com/services/' + cfg.get('slack', 'token')
+    payload = {
+        'icon_url': images['icon_url'],
+        'username': 'Untappd',
+        'text': text
+    }
     if msg_type == 'badge':
-        payload = {
-            'attachments': [
-                {
-                    'text': strip_html(text),
-                    'thumb_url': images['thumb_url'],
-                    'title': images['title']
-                }
-            ],
-            'icon_url': images['icon_url'],
-            'username': 'Untappd'
-        }
+        payload['attachments'] = [{
+            'text': strip_html(text),
+            'thumb_url': images['thumb_url'],
+            'title': images['title']
+        }]
+        payload['text'] = None
     elif msg_type == 'photo':
-        payload = {
-            'attachments': [
-                {
-                    'image_url': images['image_url'],
-                    'title': images['title']
-                }
-            ],
-            'icon_url': images['icon_url'],
-            'text': text,
-            'username': 'Untappd'
-        }
-    else:
-        payload = {
-            'icon_url': images['icon_url'],
-            'text': text,
-            'username': 'Untappd'
-        }
+        payload['attachments'] = [{
+            'image_url': images['image_url'],
+            'title': images['title']
+        }]
 
     try:
         requests.post(url, json=payload)
