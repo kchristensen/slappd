@@ -1,0 +1,9 @@
+:beer: *<{{ untappd_domain }}/user/{{ checkin.user.user_name }}|{{ checkin.user.user_name
+}}>* is drinking *<{{ untappd_domain }}/b/{{ checkin.brewery.brewery_slug }}/{{ checkin.beer.bid
+}}|{{ checkin.beer.beer_name }}>* {%- if checkin.beer.beer_abv %} ({{ '%.1f'|format(checkin.beer.beer_abv) }}%){% endif %} by *<{{ untappd_domain }}/w/{{ checkin.brewery.brewery_slug
+}}/{{ checkin.brewery.brewery_id }}|{{ checkin.brewery.brewery_name }}>*
+{%- if checkin.venue %} at *<{{ untappd_domain }}/v/{{ checkin.venue.venue_slug
+}}/{{ checkin.venue.venue_id }}|{{ checkin.venue.venue_name }}>*{% endif -%}
+{%- if has_rating %} ({{ checkin.rating_score }}/5){% endif %}
+{% if checkin.checkin_comment %}> "{{ checkin.checkin_comment }}"
+{% endif %}

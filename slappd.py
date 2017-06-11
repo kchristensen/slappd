@@ -28,6 +28,7 @@ from operator import itemgetter
 import os
 import re
 import sys
+from jinja2 import Environment, FileSystemLoader
 import requests
 
 
@@ -36,7 +37,7 @@ def config_load():
     # pylint: disable=I0011,C0103,W0601
     global cfg
 
-    cfg_file = config_path()
+    cfg_file = get_cwd() + '/slappd.cfg'
     if not os.path.exists(cfg_file):
         sys.exit('Error: Configuration file {} does not exist'
                  .format(cfg_file))
@@ -45,14 +46,9 @@ def config_load():
         cfg.read(cfg_file)
 
 
-def config_path():
-    """ Return the patch to the slappd configuration file """
-    return os.path.dirname(os.path.realpath(__file__)) + '/slappd.cfg'
-
-
 def config_update():
     """ Updates the config file with any changes that have been made """
-    cfg_file = config_path()
+    cfg_file = get_cwd() + '/slappd.cfg'
 
     try:
         with open(cfg_file, 'w') as cfg_handle:
@@ -85,6 +81,11 @@ def fetch_url(method):
             cfg.get('untappd', 'secret'),
             cfg.get('untappd', 'token'),
             cfg.get('untappd', 'lastseen'))
+
+
+def get_cwd():
+    """ Return the current working directory """
+    return os.path.dirname(os.path.realpath(__file__))
 
 
 def slack_message(images=None, msg_type=None, text=None):
@@ -134,19 +135,22 @@ def strip_html(text):
 
 def main():
     """ Where the magic happens """
+    # pylint: disable=I0011,E1101
     config_load()
     data = fetch_untappd_activity()
+    env = Environment(loader=FileSystemLoader(get_cwd() + '/templates'))
 
     if data['meta']['code'] == 200:
         checkins = data['response']['checkins']['items']
         defer_sending = True
         images = {}
         text = ''
+        tmpl = env.get_template('check-in.j2')
 
         # If any of our user's check-ins contain a photo
         # send messages immediately so pictures are immediately
         # after the check-in.
-        for checkin in reversed(checkins):
+        for checkin in checkins:
             user = checkin['user']['user_name'].lower()
             if user in cfg.get('untappd', 'users') \
                     and int(checkin['media']['count']):
@@ -171,41 +175,15 @@ def main():
                         msg_type='badge',
                         text=badge['badge_description'])
 
-                text += ':beer: *<{0}/user/{1}|{2} {3}>* is ' \
-                    'drinking a *<{0}/b/{8}/{4}|{5}>* by ' \
-                    '*<{0}/w/{8}/{7}|{6}>*'.format(
-                        'https://untappd.com',
-                        checkin['user']['user_name'],
-                        checkin['user']['first_name'],
-                        checkin['user']['last_name'],
-                        checkin['beer']['bid'],
-                        checkin['beer']['beer_name'],
-                        checkin['brewery']['brewery_name'],
-                        checkin['brewery']['brewery_id'],
-                        checkin['brewery']['brewery_slug'])
-
-                # If there's a location, include it
-                if checkin['venue']:
-                    text += ' at *<{}/v/{}/{}|{}>*'.format(
-                        'https://untappd.com',
-                        checkin['venue']['venue_slug'],
-                        checkin['venue']['venue_id'],
-                        checkin['venue']['venue_name'])
-
-                # If there's a rating, include it
-                if int(checkin['rating_score']):
-                    text += " ({}/5)".format(checkin['rating_score'])
-                text += "\n"
-
-                # If there's a check-in comment, include it
-                if len(checkin['checkin_comment']):
-                    text += ">\"{}\"\n".format(checkin['checkin_comment'])
+                # Render the message from a Jinja2 template
+                text += tmpl.render(checkin=checkin,
+                                    untappd_domain='https://untappd.com')
 
                 # Use the beer label as an icon if it exists
                 if len(checkin['beer']['beer_label']):
                     images['icon_url'] = checkin['beer']['beer_label']
 
-                # If there's a photo, optionally include it in the message
+                # If there's a photo, optionally include it in a second message
                 if int(checkin['media']['count']) \
                         and cfg.getboolean('untappd', 'display_media'):
                     media = checkin['media']['items'].pop()
