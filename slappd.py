@@ -32,6 +32,17 @@ from jinja2 import Environment, FileSystemLoader
 import requests
 
 
+def check_for_photos(checkins):
+    """ Check if any checks-in contain photos """
+    for checkin in checkins:
+        user = checkin['user']['user_name'].lower()
+        if user in cfg.get('untappd', 'users') \
+                and int(checkin['media']['count']):
+            return False
+
+    return True
+
+
 def config_load():
     """ Instantiates a global configparser object from the config file """
     # pylint: disable=I0011,C0103,W0601
@@ -49,12 +60,11 @@ def config_load():
 def config_update():
     """ Updates the config file with any changes that have been made """
     cfg_file = get_cwd() + '/slappd.cfg'
-
     try:
         with open(cfg_file, 'w') as cfg_handle:
             cfg.write(cfg_handle)
     except EnvironmentError:
-        sys.exit('Error: Writing to the configuration file {}'
+        sys.exit('Error: Could not write to configuration file {}'
                  .format(cfg_file))
 
 
@@ -129,19 +139,13 @@ def main():
 
     if data['meta']['code'] == 200:
         checkins = data['response']['checkins']['items']
-        defer_sending = True
         images = {}
         text = ''
         tmpl = env.get_template('check-in.j2')
 
-        # If any of our user's check-ins contain a photo
-        # send messages immediately so pictures are immediately
-        # after the check-in.
-        for checkin in checkins:
-            user = checkin['user']['user_name'].lower()
-            if user in cfg.get('untappd', 'users') \
-                    and int(checkin['media']['count']):
-                defer_sending = False
+        # If any check-ins contain photos, send each message individually
+        # so pictures appear immediately after the check-in.
+        defer_sending = check_for_photos(checkins)
 
         for checkin in reversed(checkins):
             user = checkin['user']['user_name'].lower()
@@ -180,17 +184,15 @@ def main():
                         images=images,
                         msg_type='photo',
                         text=text)
+                    text = ''
                 # We're sending regular check-ins one at a time this execution
                 elif not defer_sending:
                     slack_message(
                         images=images,
                         text=text)
-
-                # If we're not deferring messages, stop concatenating
-                # text to avoid duplicate check-ins
-                if not defer_sending:
                     text = ''
 
+        # We're not deferring, so lump all the messages together
         if len(text) and defer_sending:
             slack_message(
                 images=images,
