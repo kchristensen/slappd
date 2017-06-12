@@ -58,7 +58,7 @@ def config_load():
 
 def config_update():
     """ Updates the config file with any changes that have been made """
-    config_file = get_cwd() + '/slappd.CONFIG'
+    config_file = get_cwd() + '/slappd.cfg'
     try:
         with open(config_file, 'w') as cfg_handle:
             CONFIG.write(cfg_handle)
