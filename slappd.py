@@ -31,12 +31,15 @@ import sys
 from jinja2 import Environment, FileSystemLoader
 import requests
 
+# Global ConfigParser object for configuration options
+CONFIG = SafeConfigParser()
+
 
 def check_for_photos(checkins):
     """ Check if any checks-in contain photos """
     for checkin in checkins:
         user = checkin['user']['user_name'].lower()
-        if user in cfg.get('untappd', 'users') \
+        if user in CONFIG.get('untappd', 'users') \
                 and int(checkin['media']['count']):
             return False
 
@@ -44,33 +47,29 @@ def check_for_photos(checkins):
 
 
 def config_load():
-    """ Instantiates a global configparser object from the config file """
-    # pylint: disable=I0011,C0103,W0601
-    global cfg
-
-    cfg_file = get_cwd() + '/slappd.cfg'
-    if not os.path.exists(cfg_file):
+    """ Load configuration options from file """
+    config_file = get_cwd() + '/slappd.cfg'
+    if not os.path.exists(config_file):
         sys.exit('Error: Configuration file {} does not exist'
-                 .format(cfg_file))
+                 .format(config_file))
     else:
-        cfg = SafeConfigParser()
-        cfg.read(cfg_file)
+        CONFIG.read(config_file)
 
 
 def config_update():
     """ Updates the config file with any changes that have been made """
-    cfg_file = get_cwd() + '/slappd.cfg'
+    config_file = get_cwd() + '/slappd.CONFIG'
     try:
-        with open(cfg_file, 'w') as cfg_handle:
-            cfg.write(cfg_handle)
+        with open(config_file, 'w') as cfg_handle:
+            CONFIG.write(cfg_handle)
     except EnvironmentError:
         sys.exit('Error: Could not write to configuration file {}'
-                 .format(cfg_file))
+                 .format(config_file))
 
 
 def fetch_untappd_activity():
     """ Returns a requests object full of Untappd API data """
-    timeout = cfg.getint('untappd', 'timeout', fallback=10)
+    timeout = CONFIG.getint('untappd', 'timeout', fallback=10)
     try:
         request = requests.get(fetch_url('checkin/recent'), timeout=timeout)
         request.encoding = 'utf-8'
@@ -87,10 +86,10 @@ def fetch_url(method):
     return 'https://api.untappd.com/v4/{}?' \
         'client_id={}&client_secret={}&access_token={}&min_id={}'.format(
             method,
-            cfg.get('untappd', 'id'),
-            cfg.get('untappd', 'secret'),
-            cfg.get('untappd', 'token'),
-            cfg.get('untappd', 'lastseen'))
+            CONFIG.get('untappd', 'id'),
+            CONFIG.get('untappd', 'secret'),
+            CONFIG.get('untappd', 'token'),
+            CONFIG.get('untappd', 'lastseen'))
 
 
 def get_cwd():
@@ -100,7 +99,7 @@ def get_cwd():
 
 def slack_message(images=None, msg_type=None, text=None):
     """ Sends a Slack message via webhooks """
-    url = 'https://hooks.slack.com/services/' + cfg.get('slack', 'token')
+    url = 'https://hooks.slack.com/services/' + CONFIG.get('slack', 'token')
     payload = {
         'icon_url': images['icon_url'],
         'username': 'Untappd',
@@ -132,7 +131,6 @@ def strip_html(text):
 
 def main():
     """ Where the magic happens """
-    # pylint: disable=I0011,E1101
     config_load()
     data = fetch_untappd_activity()
     env = Environment(loader=FileSystemLoader(get_cwd() + '/templates'))
@@ -150,7 +148,7 @@ def main():
         for checkin in reversed(checkins):
             user = checkin['user']['user_name'].lower()
             # If this is one of our watched users, let's send a Slack message
-            if user in cfg.get('untappd', 'users'):
+            if user in CONFIG.get('untappd', 'users'):
                 # If any users earned badges, let's send individual messages
                 for badge in checkin['badges']['items']:
                     title = '{} {} earned the {} badge!' \
@@ -176,7 +174,7 @@ def main():
 
                 # If there's a photo, optionally include it in a second message
                 if int(checkin['media']['count']) \
-                        and cfg.getboolean('untappd', 'display_media'):
+                        and CONFIG.getboolean('untappd', 'display_media'):
                     media = checkin['media']['items'].pop()
                     images['image_url'] = media['photo']['photo_img_md']
                     images['title'] = checkin['beer']['beer_name']
@@ -200,7 +198,7 @@ def main():
 
         # Find the id of the most recent check-in
         if data['response']['checkins']['count']:
-            cfg.set(
+            CONFIG.set(
                 'untappd',
                 'lastseen',
                 str(max(data['response']['checkins']['items'],
@@ -219,4 +217,4 @@ if sys.version_info >= (3, 5):
     if __name__ == '__main__':
         main()
 else:
-    sys.exit('Error: This script requires Python 3.5 or greater.')
+    sys.exit('Error: This script requires Python 3.5 or greater')
