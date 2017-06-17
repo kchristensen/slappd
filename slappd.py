@@ -169,7 +169,7 @@ def main():
                                     untappd_domain='https://untappd.com')
 
                 # Use the beer label as an icon if it exists
-                if len(checkin['beer']['beer_label']):
+                if checkin['beer']['beer_label']:
                     images['icon_url'] = checkin['beer']['beer_label']
 
                 # If there's a photo, optionally include it in a second message
@@ -191,7 +191,7 @@ def main():
                     text = ''
 
         # We're not deferring, so lump all the messages together
-        if len(text) and defer_sending:
+        if text and defer_sending:
             slack_message(
                 images=images,
                 text=text)
