@@ -23,13 +23,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from configparser import SafeConfigParser
-from operator import itemgetter
 import os
 import re
 import sys
-from jinja2 import Environment, FileSystemLoader
+from configparser import SafeConfigParser
+from operator import itemgetter
+
 import requests
+from jinja2 import Environment, FileSystemLoader
 
 # Global ConfigParser object for configuration options
 CONFIG = SafeConfigParser()
