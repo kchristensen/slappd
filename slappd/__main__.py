@@ -23,12 +23,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+# Standard Library Imports
 import os
 import re
 import sys
+
+# First Party Imports
 from configparser import SafeConfigParser
 from operator import itemgetter
 
+# Third Party Imports
 import requests
 from jinja2 import Environment, FileSystemLoader
 
@@ -49,7 +53,7 @@ def check_for_photos(checkins):
 
 def config_load():
     """ Load configuration options from file """
-    config_file = get_cwd() + '/slappd.cfg'
+    config_file = get_cfg_path()
     if not os.path.exists(config_file):
         sys.exit('Error: Configuration file {} does not exist'
                  .format(config_file))
@@ -59,7 +63,7 @@ def config_load():
 
 def config_update():
     """ Updates the config file with any changes that have been made """
-    config_file = get_cwd() + '/slappd.cfg'
+    config_file = get_cfg_path()
     try:
         with open(config_file, 'w') as cfg_handle:
             CONFIG.write(cfg_handle)
@@ -93,9 +97,9 @@ def fetch_url(method):
             CONFIG.get('untappd', 'lastseen'))
 
 
-def get_cwd():
-    """ Return the current working directory """
-    return os.path.dirname(os.path.realpath(__file__))
+def get_cfg_path():
+    """ Return the path to the config file """
+    return os.path.expanduser('~/.config/slappd/slappd.cfg')
 
 
 def slack_message(images=None, msg_type=None, text=None):
@@ -133,8 +137,9 @@ def strip_html(text):
 def main():
     """ Where the magic happens """
     config_load()
+    cwd = os.path.dirname(os.path.realpath(__file__))
     data = fetch_untappd_activity()
-    env = Environment(loader=FileSystemLoader(get_cwd() + '/templates'))
+    env = Environment(loader=FileSystemLoader('{}/templates'.format(cwd)))
 
     if data['meta']['code'] == 200:
         checkins = data['response']['checkins']['items']

@@ -57,6 +57,4 @@ docs/_build/
 target/
 
 .vscode/
-slappd.cfg
-slappd.cfg.bak
 tags
