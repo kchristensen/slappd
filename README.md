@@ -6,7 +6,7 @@ Since Untappd does not currently support callbacks or webhooks, I wrote a basic
 Slack integration that will relay check-ins and badges earned for specified users
 on your feed to a Slack channel.
 
-![Screenshot](screenshot.png)
+![Screenshot](https://github.com/kchristensen/slappd/blob/master/screenshot.png?raw=true)
 
 This script is designed to be run from crontab, and issues one API call per run.
 
@@ -25,20 +25,31 @@ This script is designed to be run from crontab, and issues one API call per run.
 * Untappd [API access](https://untappd.com/api/register?register=new)
 * A Slack channel full of beer lovers
 
-### Installation & Configuration
+### Configuration
 
-If this is your first time running Slappd, it will attempt to create a config file
+The first time you run Slappd, it will attempt to create a config file
 (`~/.config/slappd/slappd.cfg`). You should edit it to reflect your Untappd API
 information and friends list.
 
-#### Docker
+### Running Slappd
 
-* Run `make docker-run` to build and run Slappd. **Note:** This mounts the
-  config you created earlier into the container to keep track of which check-ins
-  it has seen.
-* Run it from crontab: `*/5 * * * cd /path/to/slappd/source && make docker-run > /dev/null 2>&1`
+#### Docker Hub
 
-#### Virtualenv
+Slappd is available on [Docker Hub](https://hub.docker.com/r/kchristensen/slappd),
+so you don't have to build it if you don't want to. You can simply add this to
+your crontab, and after you've edited the config, you're off.
+
+`*/5 * * * * docker run -v ${HOME}/.config/slappd:/home/slappd/.config/slappd kchristensen/slappd > /dev/null 2>&1`
+
+ **Note:** The config file is not stored in the container, because it contains
+ stateful information in between runs that would not persist otherwise.
+
+#### Building a Docker Image
+
+* Run `make docker-build` to build a Slappd Docker image.
+* Build & run it from crontab: `*/5 * * * cd /path/to/slappd/source && make docker-run > /dev/null 2>&1`
+
+#### Installing to a Virtualenv
 
 * Install Slappd to a virtualenv via `make install`.
 * Run it from crontab: `*/5 * * * ~/.virtualenv/slappd/bin/slappd > /dev/null 2>&1`
