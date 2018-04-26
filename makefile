@@ -5,7 +5,7 @@ CFG_DIR = ${HOME}/.config/slappd
 .PHONY: config
 config:
 	mkdir -p ${CFG_DIR}
-	test -f ${CFG_DIR}/slappd.cfg || cp -p slappd.cfg.dist ${CFG_DIR}/slappd.cfg
+	test -f ${CFG_DIR}/slappd.cfg || cp -p slappd/templates/slappd.cfg ${CFG_DIR}/slappd.cfg
 
 .PHONY: dev
 dev: ${VIRTUALENV_DIR}/slappd
