@@ -26,6 +26,7 @@ SOFTWARE.
 # Standard Library Imports
 import os
 import re
+import shutil
 import sys
 
 # First Party Imports
@@ -51,12 +52,32 @@ def check_for_photos(checkins):
     return True
 
 
+def config_copy():
+    """ Copy config file template to the proper location """
+    config_dst = get_cfg_path()
+    config_src = '{}/templates/config.j2'.format(os.path.dirname(__file__))
+    config_dir = os.path.dirname(config_dst)
+
+    print('Configuration file {} does not exist, attempting to create it.'
+          .format(config_dst))
+    if not os.path.exists(config_dir):
+        try:
+            os.makedirs(config_dir, exist_ok=True)
+        except IOError:
+            sys.exit('Error: Could not create directory {}'.format(config_dir))
+    try:
+        shutil.copy(config_src, config_dst)
+        sys.exit('Successfully created configuration file, please edit '
+                 'it to reflect your API information.')
+    except IOError:
+        sys.exit('Error: Could not write to configuration file {}'.format(config_dst))
+
+
 def config_load():
     """ Load configuration options from file """
     config_file = get_cfg_path()
     if not os.path.exists(config_file):
-        sys.exit('Error: Configuration file {} does not exist'
-                 .format(config_file))
+        config_copy()
     else:
         CONFIG.read(config_file)
 
