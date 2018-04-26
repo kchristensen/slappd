@@ -13,6 +13,14 @@ dev: ${VIRTUALENV_DIR}/slappd
 		pip install -U flake8 pip && \
 		pip install --editable .
 
+.PHONY: docker-build
+docker-build:
+	docker build -t slappd .
+
+.PHONY: docker-run
+docker-run: docker-build
+	docker run -v ${HOME}/.config/slappd:/home/slappd/.config/slappd slappd
+
 .PHONY: install
 install: ${VIRTUALENV_DIR}/slappd
 	source ${VIRTUALENV_DIR}/slappd/bin/activate && \

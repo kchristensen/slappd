@@ -27,7 +27,17 @@ This script is designed to be run from crontab, and issues one API call per run.
 
 ### Installation & Configuration
 
+If this is your first time, create the default config file with `make config`
+and then edit it (`~/.config/slappd/slappd.cfg`) to reflect your API information
+and friends list.
+
+#### Docker
+
+* Run `make docker-run` to build and run Slappd. **Note:** This mounts the
+  config you created earlier into the container to keep track of which check-ins
+  it has seen.
+
+#### Virtualenv
+
 * Install Slappd to a virtualenv via `make install`.
-* If this is your first time, create the default config file with `make config`
-  and then edit it `(~/.config/slappd/slappd.cfg)` to reflect your API information.
 * Run it from crontab: `*/5 * * * ~/.virtualenv/slappd/bin/slappd > /dev/null 2>&1`
