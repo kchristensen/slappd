@@ -67,8 +67,8 @@ def config_copy():
             sys.exit('Error: Could not create directory {}'.format(config_dir))
     try:
         shutil.copy(config_src, config_dst)
-        sys.exit('Successfully created configuration file, please edit '
-                 'it to reflect your API information.')
+        sys.exit('Successfully created configuration file {}, please edit '
+                 'it to reflect your API information.'.format(config_dst))
     except IOError:
         sys.exit('Error: Could not write to configuration file {}'.format(config_dst))
 
@@ -125,7 +125,6 @@ def get_cfg_path():
 
 def slack_message(images=None, msg_type=None, text=None):
     """ Sends a Slack message via webhooks """
-    url = 'https://hooks.slack.com/services/' + CONFIG.get('slack', 'token')
     payload = {
         'icon_url': images['icon_url'],
         'username': 'Untappd',
@@ -145,7 +144,8 @@ def slack_message(images=None, msg_type=None, text=None):
         }]
 
     try:
-        requests.post(url, json=payload)
+        requests.post('https://hooks.slack.com/services/{}'.format(
+            CONFIG.get('slack', 'token')), json=payload)
     except requests.exceptions.RequestException:
         sys.exit('Error: There was an error connecting to the Slack API')
 
@@ -219,9 +219,7 @@ def main():
 
         # We're not deferring, so lump all the messages together
         if text and defer_sending:
-            slack_message(
-                images=images,
-                text=text)
+            slack_message(images=images, text=text)
 
         # Find the id of the most recent check-in
         if data['response']['checkins']['count']:
