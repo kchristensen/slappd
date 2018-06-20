@@ -1,10 +1,6 @@
-# slappd
-
 ### About
 
-Since Untappd does not currently support callbacks or webhooks, I wrote a basic
-Slack integration that will relay check-ins and badges earned for specified users
-on your feed to a Slack channel.
+Since Untappd does not currently support callbacks or webhooks, I wrote a basic Slack integration that will relay check-ins and badges earned for specified users on your feed to a Slack channel.
 
 ![Screenshot](https://github.com/kchristensen/slappd/blob/master/screenshot.png?raw=true)
 
@@ -12,10 +8,8 @@ This script is designed to be run from crontab, and issues one API call per run.
 
 ### Known Issues
 
-* The first time you run the script, it may be a little chatty because it has
-  not previously seen your feed before.
-* If you have a lot of Untappd friends, but are only watching a subset of them,
-  you may miss check-ins if you don't run Slappd regularly.
+* The first time you run the script, it may be a little chatty because it has not previously seen your feed before.
+* If you have a lot of Untappd friends, but are only watching a subset of them, you may miss check-ins if you don't run Slappd regularly.
 
 ### Requirements
 
@@ -27,29 +21,24 @@ This script is designed to be run from crontab, and issues one API call per run.
 
 ### Configuration
 
-The first time you run Slappd, it will attempt to create a config file
-(`~/.config/slappd/slappd.cfg`). You should edit it to reflect your Untappd API
-information and friends list.
+The first time you run Slappd, it will attempt to create a config file (`~/.config/slappd/slappd.cfg`). You should edit it to reflect your Untappd API information and friends list.
 
 ### Running Slappd
 
-#### Docker Hub
+##### Docker Hub
 
-Slappd is available on [Docker Hub](https://hub.docker.com/r/kchristensen/slappd),
-so you don't have to build it if you don't want to. You can simply add this to
-your crontab, and after you've edited the config, you're off.
+Slappd is available on [Docker Hub](https://hub.docker.com/r/kchristensen/slappd), so you don't have to build it if you don't want to. You can simply add this to your crontab, and after you've edited the config, you're off.
 
 `*/5 * * * * docker run -v ${HOME}/.config/slappd:/home/slappd/.config/slappd kchristensen/slappd > /dev/null 2>&1`
 
- **Note:** The config file is not stored in the container, because it contains
- stateful information in between runs that would not persist otherwise.
+ **Note:** The config file is not stored in the container, because it contains stateful information in between runs that would not persist otherwise.
 
-#### Building a Docker Image
+##### Building a Docker Image
 
 * Run `make docker-build` to build a Slappd Docker image.
 * Build & run it from crontab: `*/5 * * * cd /path/to/slappd/source && make docker-run > /dev/null 2>&1`
 
-#### Installing to a Virtualenv
+##### Installing to a Virtualenv
 
 * Install Slappd to a virtualenv via `make install`.
 * Run it from crontab: `*/5 * * * ~/.virtualenv/slappd/bin/slappd > /dev/null 2>&1`
