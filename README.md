@@ -29,7 +29,7 @@ The first time you run Slappd, it will attempt to create a config file (`~/.conf
 
 Slappd is available on [Docker Hub](https://hub.docker.com/r/kchristensen/slappd), so you don't have to build it if you don't want to. You can simply add this to your crontab, and after you've edited the config, you're off.
 
-`*/5 * * * * docker run -v ${HOME}/.config/slappd:/home/slappd/.config/slappd kchristensen/slappd > /dev/null 2>&1`
+`*/5 * * * * docker run --name slappd --rm -v ${HOME}/.config/slappd:/home/slappd/.config/slappd kchristensen/slappd > /dev/null 2>&1`
 
  **Note:** The config file is not stored in the container, because it contains stateful information in between runs that would not persist otherwise.
 
