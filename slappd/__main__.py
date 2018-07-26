@@ -45,7 +45,7 @@ def check_for_photos(checkins):
     """ Check if any checks-in contain photos """
     for checkin in checkins:
         user = checkin['user']['user_name'].lower()
-        if user in CONFIG.get('untappd', 'users') \
+        if user in CONFIG['untappd']['users'] \
                 and int(checkin['media']['count']):
             return False
 
@@ -95,14 +95,16 @@ def config_update():
 
 def fetch_untappd_activity():
     """ Returns a requests object full of Untappd API data """
-    timeout = CONFIG.getint('untappd', 'timeout', fallback=10)
+    if 'timeout' not in CONFIG['untappd']:
+        CONFIG['untappd']['timeout'] = '10'
     try:
-        request = requests.get(fetch_url('checkin/recent'), timeout=timeout)
+        request = requests.get(fetch_url('checkin/recent'),
+                               timeout=int(CONFIG['untappd']['timeout']))
         request.encoding = 'utf-8'
         return request.json()
     except requests.exceptions.Timeout:
         sys.exit('Error: Untappd API timed out after {} seconds'
-                 .format(timeout))
+                 .format(CONFIG['untappd']['timeout']))
     except requests.exceptions.RequestException:
         sys.exit('Error: There was an error connecting to the Untappd API')
 
@@ -112,10 +114,10 @@ def fetch_url(method):
     return 'https://api.untappd.com/v4/{}?' \
         'client_id={}&client_secret={}&access_token={}&min_id={}'.format(
             method,
-            CONFIG.get('untappd', 'id'),
-            CONFIG.get('untappd', 'secret'),
-            CONFIG.get('untappd', 'token'),
-            CONFIG.get('untappd', 'lastseen'))
+            CONFIG['untappd']['id'],
+            CONFIG['untappd']['secret'],
+            CONFIG['untappd']['token'],
+            CONFIG['untappd']['lastseen'])
 
 
 def get_cfg_path():
@@ -145,7 +147,7 @@ def slack_message(images=None, msg_type=None, text=None):
 
     try:
         requests.post('https://hooks.slack.com/services/{}'.format(
-            CONFIG.get('slack', 'token')), json=payload)
+            CONFIG['slack']['token']), json=payload)
     except requests.exceptions.RequestException:
         sys.exit('Error: There was an error connecting to the Slack API')
 
@@ -175,7 +177,7 @@ def main():
         for checkin in reversed(checkins):
             user = checkin['user']['user_name'].lower()
             # If this is one of our watched users, let's send a Slack message
-            if user in CONFIG.get('untappd', 'users'):
+            if user in CONFIG['untappd']['users']:
                 # If any users earned badges, let's send individual messages
                 for badge in checkin['badges']['items']:
                     title = '{} {} earned the {} badge!' \
@@ -201,7 +203,7 @@ def main():
 
                 # If there's a photo, optionally include it in a second message
                 if int(checkin['media']['count']) \
-                        and CONFIG.getboolean('untappd', 'display_media'):
+                        and bool(CONFIG['untappd']['display_media']):
                     media = checkin['media']['items'].pop()
                     images['image_url'] = media['photo']['photo_img_md']
                     images['title'] = checkin['beer']['beer_name']
@@ -221,16 +223,13 @@ def main():
         if text and defer_sending:
             slack_message(images=images, text=text)
 
-        # Find the id of the most recent check-in
+        # Record the id of the most recent check-in
         if data['response']['checkins']['count']:
-            CONFIG.set(
-                'untappd',
-                'lastseen',
-                str(max(data['response']['checkins']['items'],
-                        key=itemgetter('checkin_id'))['checkin_id']))
-
-            # Update the config file with the last check-in seen
-            config_update()
+            lastseen = max(data['response']['checkins']['items'],
+                           key=itemgetter('checkin_id'))['checkin_id']
+            if lastseen != CONFIG['untappd']['lastseen']:
+                CONFIG['untappd']['lastseen'] = str(lastseen)
+                config_update()
     elif data['meta']['error_type'] == 'invalid_limit':
         sys.exit('Error: Untappd API rate limit reached, try again later')
     else:
