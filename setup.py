@@ -20,5 +20,5 @@ setup(
     package_data={
         '': ['templates/*.j2']
     },
-    version='1.0.3'
+    version='1.0.4'
 )
