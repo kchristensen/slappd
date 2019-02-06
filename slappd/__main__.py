@@ -45,7 +45,7 @@ def check_for_photos(checkins):
     """ Check if any checks-in contain photos """
     for checkin in checkins:
         user = checkin['user']['user_name'].lower()
-        if user in CONFIG['untappd']['users'] \
+        if user in CONFIG['untappd']['users'].lower() \
                 and int(checkin['media']['count']):
             return False
 
@@ -177,7 +177,7 @@ def main():
         for checkin in reversed(checkins):
             user = checkin['user']['user_name'].lower()
             # If this is one of our watched users, let's send a Slack message
-            if user in CONFIG['untappd']['users']:
+            if user in CONFIG['untappd']['users'].lower():
                 # If any users earned badges, let's send individual messages
                 for badge in checkin['badges']['items']:
                     title = '{} {} earned the {} badge!' \
