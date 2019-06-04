@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 """ Slappd setup.py. """
 
 from setuptools import setup
@@ -20,5 +19,5 @@ setup(
     package_data={
         '': ['templates/*.j2']
     },
-    version='1.0.4'
+    version='1.0.5'
 )

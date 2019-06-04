@@ -4,7 +4,7 @@ VIRTUALENV_DIR = ${HOME}/.virtualenv
 .PHONY: dev
 dev: ${VIRTUALENV_DIR}/slappd
 	source ${VIRTUALENV_DIR}/slappd/bin/activate && \
-		pip install -U flake8 pip && \
+		pip install -U flake8 pip pylint && \
 		pip install --editable .
 
 .PHONY: docker-build
