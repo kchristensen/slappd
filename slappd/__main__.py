@@ -102,8 +102,8 @@ def fetch_untappd_activity():
         request.encoding = 'utf-8'
         return request.json()
     except requests.exceptions.Timeout:
-        sys.exit(f"Error: Untappd API timed out after "
-                 "{CONFIG['untappd']['timeout']} seconds")
+        sys.exit("Error: Untappd API timed out after "
+                 f"{CONFIG['untappd']['timeout']} seconds")
     except requests.exceptions.RequestException:
         sys.exit('Error: There was an error connecting to the Untappd API')
 
@@ -111,10 +111,10 @@ def fetch_untappd_activity():
 def fetch_url(method):
     """ Returns an API url with credentials inserted """
     return (f"https://api.untappd.com/v4/{method}?"
-            "client_id={CONFIG['untappd']['id']}&"
-            "client_secret={CONFIG['untappd']['secret']}&"
-            "access_token={CONFIG['untappd']['token']}&"
-            "min_id={CONFIG['untappd']['lastseen']}")
+            f"client_id={CONFIG['untappd']['id']}&"
+            f"client_secret={CONFIG['untappd']['secret']}&"
+            f"access_token={CONFIG['untappd']['token']}&"
+            f"min_id={CONFIG['untappd']['lastseen']}")
 
 
 def get_cfg_path():
@@ -143,8 +143,8 @@ def slack_message(images=None, msg_type=None, text=None):
         }]
 
     try:
-        requests.post(f"https://hooks.slack.com/services/"
-                      "{CONFIG['slack']['token']}", json=payload)
+        requests.post("https://hooks.slack.com/services/"
+                      f"{CONFIG['slack']['token']}", json=payload)
     except requests.exceptions.RequestException:
         sys.exit('Error: There was an error connecting to the Slack API')
 
@@ -178,8 +178,8 @@ def main():
                 # If any users earned badges, let's send individual messages
                 for badge in checkin['badges']['items']:
                     title = (f"{checkin['user']['first_name']} "
-                             "{checkin['user']['last_name']} earned the "
-                             "{badge['badge_name']} badge!")
+                             f"{checkin['user']['last_name']} earned the "
+                             f"{badge['badge_name']} badge!")
                     images['icon_url'] = badge['badge_image']['sm']
                     images['thumb_url'] = badge['badge_image']['md']
                     images['title'] = title
@@ -202,16 +202,11 @@ def main():
                     media = checkin['media']['items'].pop()
                     images['image_url'] = media['photo']['photo_img_md']
                     images['title'] = checkin['beer']['beer_name']
-                    slack_message(
-                        images=images,
-                        msg_type='photo',
-                        text=text)
+                    slack_message(images=images, msg_type='photo', text=text)
                     text = ''
                 # We're sending regular check-ins one at a time this execution
                 elif not defer_sending:
-                    slack_message(
-                        images=images,
-                        text=text)
+                    slack_message(images=images, text=text)
                     text = ''
 
         # We're not deferring, so lump all the messages together
@@ -228,8 +223,8 @@ def main():
     elif data['meta']['error_type'] == 'invalid_limit':
         sys.exit('Error: Untappd API rate limit reached, try again later')
     else:
-        sys.exit(f"Error: Untappd API returned http code "
-                 "{data['meta']['code']}")
+        sys.exit("Error: Untappd API returned http code "
+                 f"{data['meta']['code']}")
 
 
 if sys.version_info >= (3, 6):
