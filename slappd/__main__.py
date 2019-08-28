@@ -159,7 +159,7 @@ def main():
     config_load()
     cwd = os.path.dirname(os.path.realpath(__file__))
     data = fetch_untappd_activity()
-    env = Environment(loader=FileSystemLoader(f'{cwd}/templates'))
+    env = Environment(autoescape=True, loader=FileSystemLoader(f'{cwd}/templates'))
 
     if data['meta']['code'] == 200:
         checkins = data['response']['checkins']['items']
