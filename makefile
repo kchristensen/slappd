@@ -27,7 +27,8 @@ ${VIRTUALENV_DIR}/slappd:
 
 .PHONY: lint
 lint:
-	-bandit -r .
-	-flake8
+	source ${VIRTUALENV_DIR}/slappd/bin/activate && \
+		bandit -r . && \
+		flake8 --count --statistics
 
 .DEFAULT_GOAL := install
