@@ -28,13 +28,14 @@ import os
 import re
 import shutil
 import sys
-
-# First Party Imports
 from configparser import SafeConfigParser
 from operator import itemgetter
 
 # Third Party Imports
+import pkg_resources
 import requests
+
+# First Party Imports
 from jinja2 import Environment, FileSystemLoader
 
 # Global ConfigParser object for configuration options
@@ -94,10 +95,13 @@ def config_update():
 
 def fetch_untappd_activity():
     """ Returns a requests object full of Untappd API data """
+    version = pkg_resources.get_distribution("slappd").version
+    headers = {'User-Agent': f'Slappd/{version}'}
     if 'timeout' not in CONFIG['untappd']:
         CONFIG['untappd']['timeout'] = '10'
     try:
         request = requests.get(fetch_url('checkin/recent'),
+                               headers=headers,
                                timeout=int(CONFIG['untappd']['timeout']))
         request.encoding = 'utf-8'
         return request.json()
