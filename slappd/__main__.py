@@ -28,7 +28,7 @@ import os
 import re
 import shutil
 import sys
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 from operator import itemgetter
 
 # Third Party Imports
@@ -39,7 +39,7 @@ import requests
 from jinja2 import Environment, FileSystemLoader
 
 # Global ConfigParser object for configuration options
-CONFIG = SafeConfigParser()
+CONFIG = ConfigParser()
 
 
 def check_for_photos(checkins):
@@ -179,18 +179,22 @@ def main():
             user = checkin['user']['user_name'].lower()
             # If this is one of our watched users, let's send a Slack message
             if user in CONFIG['untappd']['users'].lower():
-                # If any users earned badges, let's send individual messages
-                for badge in checkin['badges']['items']:
-                    title = (f"{checkin['user']['first_name']} "
-                             f"{checkin['user']['last_name']} earned the "
-                             f"{badge['badge_name']} badge!")
-                    images['icon_url'] = badge['badge_image']['sm']
-                    images['thumb_url'] = badge['badge_image']['md']
-                    images['title'] = title
-                    slack_message(
-                        images=images,
-                        msg_type='badge',
-                        text=badge['badge_description'])
+                # If checkin earned any badges, let's send individual messages,
+                # but not if badges are disabled in config.
+                if CONFIG['untappd'].getboolean(
+                    'display_badges', fallback=True
+                ):
+                    for badge in checkin['badges']['items']:
+                        title = (f"{checkin['user']['first_name']} "
+                                f"{checkin['user']['last_name']} earned the "
+                                f"{badge['badge_name']} badge!")
+                        images['icon_url'] = badge['badge_image']['sm']
+                        images['thumb_url'] = badge['badge_image']['md']
+                        images['title'] = title
+                        slack_message(
+                            images=images,
+                            msg_type='badge',
+                            text=badge['badge_description'])
 
                 # Render the message from a Jinja2 template
                 text += tmpl.render(checkin=checkin,
@@ -201,8 +205,10 @@ def main():
                     images['icon_url'] = checkin['beer']['beer_label']
 
                 # If there's a photo, optionally include it in a second message
-                if int(checkin['media']['count']) \
-                        and bool(CONFIG['untappd']['display_media']):
+                if (
+                    int(checkin['media']['count'])
+                    and CONFIG['untappd'].getboolean('display_media')
+                ):
                     media = checkin['media']['items'].pop()
                     images['image_url'] = media['photo']['photo_img_md']
                     images['title'] = checkin['beer']['beer_name']
