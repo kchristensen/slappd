@@ -28,13 +28,14 @@ import os
 import re
 import shutil
 import sys
-
-# First Party Imports
 from configparser import SafeConfigParser
 from operator import itemgetter
 
 # Third Party Imports
+import pkg_resources
 import requests
+
+# First Party Imports
 from jinja2 import Environment, FileSystemLoader
 
 # Global ConfigParser object for configuration options
@@ -55,22 +56,22 @@ def check_for_photos(checkins):
 def config_copy():
     """ Copy config file template to the proper location """
     config_dst = get_cfg_path()
-    config_src = '{}/templates/config.j2'.format(os.path.dirname(__file__))
+    config_src = f'{os.path.dirname(__file__)}/templates/config.j2'
     config_dir = os.path.dirname(config_dst)
 
-    print('Configuration file {} does not exist, attempting to create it.'
-          .format(config_dst))
+    print(f'Configuration file {config_dst} does not exist, '
+          'attempting to create it.')
     if not os.path.exists(config_dir):
         try:
             os.makedirs(config_dir, exist_ok=True)
         except IOError:
-            sys.exit('Error: Could not create directory {}'.format(config_dir))
+            sys.exit(f'Error: Could not create directory {config_dir}')
     try:
         shutil.copy(config_src, config_dst)
-        sys.exit('Successfully created configuration file {}, please edit '
-                 'it to reflect your API information.'.format(config_dst))
+        sys.exit(f'Successfully created configuration file {config_dst}, '
+                 'please edit it to reflect your API information.')
     except IOError:
-        sys.exit('Error: Could not write to configuration file {}'.format(config_dst))
+        sys.exit(f'Error: Could not write to configuration file {config_dst}')
 
 
 def config_load():
@@ -89,35 +90,35 @@ def config_update():
         with open(config_file, 'w') as cfg_handle:
             CONFIG.write(cfg_handle)
     except EnvironmentError:
-        sys.exit('Error: Could not write to configuration file {}'
-                 .format(config_file))
+        sys.exit('Error: Could not write to configuration file {config_file}')
 
 
 def fetch_untappd_activity():
     """ Returns a requests object full of Untappd API data """
+    version = pkg_resources.get_distribution("slappd").version
+    headers = {'User-Agent': f'Slappd/{version}'}
     if 'timeout' not in CONFIG['untappd']:
         CONFIG['untappd']['timeout'] = '10'
     try:
         request = requests.get(fetch_url('checkin/recent'),
+                               headers=headers,
                                timeout=int(CONFIG['untappd']['timeout']))
         request.encoding = 'utf-8'
         return request.json()
     except requests.exceptions.Timeout:
-        sys.exit('Error: Untappd API timed out after {} seconds'
-                 .format(CONFIG['untappd']['timeout']))
+        sys.exit("Error: Untappd API timed out after "
+                 f"{CONFIG['untappd']['timeout']} seconds")
     except requests.exceptions.RequestException:
         sys.exit('Error: There was an error connecting to the Untappd API')
 
 
 def fetch_url(method):
     """ Returns an API url with credentials inserted """
-    return 'https://api.untappd.com/v4/{}?' \
-        'client_id={}&client_secret={}&access_token={}&min_id={}'.format(
-            method,
-            CONFIG['untappd']['id'],
-            CONFIG['untappd']['secret'],
-            CONFIG['untappd']['token'],
-            CONFIG['untappd']['lastseen'])
+    return (f"https://api.untappd.com/v4/{method}?"
+            f"client_id={CONFIG['untappd']['id']}&"
+            f"client_secret={CONFIG['untappd']['secret']}&"
+            f"access_token={CONFIG['untappd']['token']}&"
+            f"min_id={CONFIG['untappd']['lastseen']}")
 
 
 def get_cfg_path():
@@ -146,8 +147,8 @@ def slack_message(images=None, msg_type=None, text=None):
         }]
 
     try:
-        requests.post('https://hooks.slack.com/services/{}'.format(
-            CONFIG['slack']['token']), json=payload)
+        requests.post("https://hooks.slack.com/services/"
+                      f"{CONFIG['slack']['token']}", json=payload)
     except requests.exceptions.RequestException:
         sys.exit('Error: There was an error connecting to the Slack API')
 
@@ -162,7 +163,7 @@ def main():
     config_load()
     cwd = os.path.dirname(os.path.realpath(__file__))
     data = fetch_untappd_activity()
-    env = Environment(loader=FileSystemLoader('{}/templates'.format(cwd)))
+    env = Environment(autoescape=True, loader=FileSystemLoader(f'{cwd}/templates'))
 
     if data['meta']['code'] == 200:
         checkins = data['response']['checkins']['items']
@@ -180,11 +181,9 @@ def main():
             if user in CONFIG['untappd']['users'].lower():
                 # If any users earned badges, let's send individual messages
                 for badge in checkin['badges']['items']:
-                    title = '{} {} earned the {} badge!' \
-                        .format(
-                            checkin['user']['first_name'],
-                            checkin['user']['last_name'],
-                            badge['badge_name'])
+                    title = (f"{checkin['user']['first_name']} "
+                             f"{checkin['user']['last_name']} earned the "
+                             f"{badge['badge_name']} badge!")
                     images['icon_url'] = badge['badge_image']['sm']
                     images['thumb_url'] = badge['badge_image']['md']
                     images['title'] = title
@@ -207,16 +206,11 @@ def main():
                     media = checkin['media']['items'].pop()
                     images['image_url'] = media['photo']['photo_img_md']
                     images['title'] = checkin['beer']['beer_name']
-                    slack_message(
-                        images=images,
-                        msg_type='photo',
-                        text=text)
+                    slack_message(images=images, msg_type='photo', text=text)
                     text = ''
                 # We're sending regular check-ins one at a time this execution
                 elif not defer_sending:
-                    slack_message(
-                        images=images,
-                        text=text)
+                    slack_message(images=images, text=text)
                     text = ''
 
         # We're not deferring, so lump all the messages together
@@ -233,12 +227,12 @@ def main():
     elif data['meta']['error_type'] == 'invalid_limit':
         sys.exit('Error: Untappd API rate limit reached, try again later')
     else:
-        sys.exit('Error: Untappd API returned http code {}'
-                 .format(data['meta']['code']))
+        sys.exit("Error: Untappd API returned http code "
+                 f"{data['meta']['code']}")
 
 
-if sys.version_info >= (3, 5):
+if sys.version_info >= (3, 6):
     if __name__ == '__main__':
         main()
 else:
-    sys.exit('Error: This script requires Python 3.5 or greater')
+    sys.exit('Error: This script requires Python 3.6 or greater')

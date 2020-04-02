@@ -3,7 +3,7 @@ WORKDIR /tmp
 
 COPY . .
 RUN adduser -S slappd && \
-    pip install --upgrade . && \
+    pip install --no-cache-dir --upgrade . && \
     rm -rf /tmp/*
 
 USER slappd
