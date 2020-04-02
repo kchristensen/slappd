@@ -186,8 +186,8 @@ def main():
                 ):
                     for badge in checkin['badges']['items']:
                         title = (f"{checkin['user']['first_name']} "
-                                f"{checkin['user']['last_name']} earned the "
-                                f"{badge['badge_name']} badge!")
+                                 f"{checkin['user']['last_name']} earned the "
+                                 f"{badge['badge_name']} badge!")
                         images['icon_url'] = badge['badge_image']['sm']
                         images['thumb_url'] = badge['badge_image']['md']
                         images['title'] = title
