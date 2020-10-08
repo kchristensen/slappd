@@ -200,8 +200,8 @@ def main():
                 text += tmpl.render(
                     checkin=checkin,
                     untappd_domain='https://untappd.com',
-                    display_app_links=CONFIG['untappd'].getboolean(
-                        'display_app_links'
+                    display_app_link=CONFIG['untappd'].getboolean(
+                        'display_app_link'
                     ),
                 )
 
