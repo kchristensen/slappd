@@ -5,5 +5,6 @@
 {%- if checkin.venue %} at *<{{ untappd_domain }}/v/{{ checkin.venue.venue_slug
 }}/{{ checkin.venue.venue_id }}|{{ checkin.venue.venue_name | safe }}>*{% endif -%}
 {%- if checkin.rating_score %} ({{ checkin.rating_score }}/5){% endif %}
+{%- if display_app_link %} – <untappd://checkin/{{ checkin.checkin_id }}|open check-in in app :selfie:>{% endif %}
 {% if checkin.checkin_comment %}> "{{ checkin.checkin_comment }}"
 {% endif %}

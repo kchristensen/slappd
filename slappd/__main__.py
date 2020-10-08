@@ -197,8 +197,13 @@ def main():
                             text=badge['badge_description'])
 
                 # Render the message from a Jinja2 template
-                text += tmpl.render(checkin=checkin,
-                                    untappd_domain='https://untappd.com')
+                text += tmpl.render(
+                    checkin=checkin,
+                    untappd_domain='https://untappd.com',
+                    display_app_link=CONFIG['untappd'].getboolean(
+                        'display_app_link'
+                    ),
+                )
 
                 # Use the beer label as an icon if it exists
                 if checkin['beer']['beer_label']:
