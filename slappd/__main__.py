@@ -148,7 +148,9 @@ def slack_message(images=None, msg_type=None, text=None):
 
     try:
         requests.post("https://hooks.slack.com/services/"
-                      f"{CONFIG['slack']['token']}", json=payload)
+                      f"{CONFIG['slack']['token']}",
+                      json=payload,
+                      timeout=int(CONFIG['untappd']['timeout']))
     except requests.exceptions.RequestException:
         sys.exit('Error: There was an error connecting to the Slack API')
 
