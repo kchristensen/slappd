@@ -10,9 +10,9 @@ setup(
     ''',
     include_package_data=True,
     install_requires=[
-        'Jinja2',
-        'configparser',
-        'requests'
+        'Jinja2==3.1.2',
+        'configparser==5.3.0',
+        'requests==2.28.2'
     ],
     name='slappd',
     packages=['slappd'],
