@@ -4,7 +4,7 @@
 
 Since Untappd does not currently support callbacks or webhooks, I wrote a basic Slack integration that will relay check-ins and badges earned for specified users on your feed to a Slack channel.
 
-![Screenshot](https://github.com/kchristensen/slappd/blob/master/screenshot.png?raw=true)
+![Screenshot](https://github.com/kchristensen/slappd/blob/main/screenshot.png?raw=true)
 
 This script is designed to be run from crontab, and issues one API call per run.
 
