@@ -11,7 +11,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'Jinja2==3.1.2',
-        'configparser==5.3.0',
+        'configparser==6.0.0',
         'requests==2.31.0'
     ],
     name='slappd',
