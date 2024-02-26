@@ -9,7 +9,7 @@ setup(
         slappd=slappd.__main__:main
     """,
     include_package_data=True,
-    install_requires=["Jinja2==3.1.3", "configparser==6.0.0", "requests==2.31.0"],
+    install_requires=["Jinja2==3.1.3", "configparser==6.0.1", "requests==2.31.0"],
     name="slappd",
     packages=["slappd"],
     package_data={"": ["templates/*.j2"]},
