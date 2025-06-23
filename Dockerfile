@@ -1,7 +1,7 @@
 FROM python:3.12-alpine
 WORKDIR /tmp
 
-LABEL org.opencontainers.image.source https://github.com/kchristensen/slappd
+LABEL org.opencontainers.image.source=https://github.com/kchristensen/slappd
 
 COPY . .
 RUN adduser -S slappd && \
