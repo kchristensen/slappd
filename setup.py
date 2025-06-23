@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" Slappd setup.py. """
+"""Slappd setup.py."""
 
 from setuptools import setup
 

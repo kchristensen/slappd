@@ -1,1 +1,1 @@
-""" Slappd Package """
+"""Slappd Package"""
