@@ -32,8 +32,8 @@ from configparser import ConfigParser
 from operator import itemgetter
 
 # Third Party Imports
-import pkg_resources
 import requests
+from importlib.metadata import version
 
 # First Party Imports
 from jinja2 import Environment, FileSystemLoader
@@ -96,8 +96,8 @@ def config_update():
 
 def fetch_untappd_activity():
     """Returns a requests object full of Untappd API data"""
-    version = pkg_resources.get_distribution("slappd").version
-    headers = {"User-Agent": f"Slappd/{version}"}
+    pkg_version = version("slappd")
+    headers = {"User-Agent": f"Slappd/{pkg_version}"}
     if "timeout" not in CONFIG["untappd"]:
         CONFIG["untappd"]["timeout"] = "10"
     try:

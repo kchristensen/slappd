@@ -16,7 +16,7 @@ This script is designed to be run from crontab, and issues one API call per run.
 ## Requirements
 
 * Docker, or the ability to create a [Virtual Environment](https://docs.python.org/3/tutorial/venv.html)
-* >= Python 3.7 and a couple of common Python modules: (configparser, Jinja2, requests)
+* >= Python 3.10 and a couple of common Python modules: (configparser, Jinja2, requests)
 * A way of periodically running this script (at, cron, etc)
 * Untappd [API access](https://untappd.com/api/register?register=new)
 * A Slack channel full of beer lovers
